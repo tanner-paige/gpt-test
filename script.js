@@ -7,7 +7,7 @@ function postMessage() {
   var xhr = new XMLHttpRequest();
 
   // Set up the request
-  xhr.open('POST', '/post-message', true);
+  xhr.open('POST', '/messages.json', true);
   xhr.setRequestHeader('Content-Type', 'application/json');
 
   // Set up a callback function for when the request completes
