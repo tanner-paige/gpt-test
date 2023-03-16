@@ -1,55 +1,66 @@
-let messages = [];
+function postMessage() {
+  // Get the values of the name and message fields
+  var name = document.getElementById('name').value;
+  var message = document.getElementById('message').value;
 
-function saveMessage() {
-  const messageText = document.getElementById("message-input").value.trim();
-  if (messageText === "") {
-    alert("Please enter a message before submitting");
-    return;
-  }
+  // Create a new XHR object
+  var xhr = new XMLHttpRequest();
 
-  const newMessage = { text: messageText, votes: 0 };
-  messages.push(newMessage);
+  // Set up the request
+  xhr.open('POST', '/post-message', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
 
-  fetch("./messages.json", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(messages),
-  })
-    .then(() => {
+  // Set up a callback function for when the request completes
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      // Clear the form
+      document.getElementById('name').value = '';
+      document.getElementById('message').value = '';
+
+      // Reload the message list
       loadMessages();
-      document.getElementById("message-input").value = "";
-    })
-    .catch((error) => {
-      console.error("Error saving messages:", error);
-    });
+    } else {
+      alert('Error posting message');
+    }
+  };
+
+  // Send the request with the JSON data
+  xhr.send(JSON.stringify({ name: name, message: message }));
 }
 
 function loadMessages() {
-  fetch("./messages.json")
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return response.json();
-    })
-    .then((data) => {
-      messages = data;
-      const messageList = document.getElementById("message-list");
-      messageList.innerHTML = "";
-      for (let i = 0; i < messages.length; i++) {
-        const message = messages[i];
-        const listItem = document.createElement("li");
-        listItem.innerText = message.text;
-        messageList.appendChild(listItem);
-      }
-    })
-    .catch((error) => {
-      console.error("Error loading messages:", error);
-    });
+  // Create a new XHR object
+  var xhr = new XMLHttpRequest();
+
+  // Set up the request
+  xhr.open('GET', '/messages', true);
+
+  // Set up a callback function for when the request completes
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      // Parse the JSON response
+      var messages = JSON.parse(xhr.responseText);
+
+      // Clear the message list
+      var messageList = document.getElementById('message-list');
+      messageList.innerHTML = '';
+
+      // Add each message to the list
+      messages.forEach(function(message) {
+        var li = document.createElement('li');
+        li.textContent = message.name + ': ' + message.message;
+        messageList.appendChild(li);
+      });
+    } else {
+      alert('Error loading messages');
+    }
+  };
+
+  // Send the request
+  xhr.send();
 }
 
+// Load the messages when the page loads
 loadMessages();
 
 
