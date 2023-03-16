@@ -3,6 +3,19 @@ const messageList = document.getElementById('message-list');
 
 let messages = [];
 
+function getMessages(request, response) {
+  fs.readFile('./messages.json', 'utf8', function(err, data) {
+    if (err) {
+      console.error(err)
+      response.status(500).send('Server Error')
+    } else {
+      response.setHeader('Content-Type', 'application/json')
+      response.send(data)
+    }
+  })
+}
+
+
 function renderMessages() {
 	messageList.innerHTML = '';
 	messages.forEach((message, index) => {
