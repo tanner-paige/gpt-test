@@ -33,7 +33,7 @@ function loadMessages() {
   var xhr = new XMLHttpRequest();
 
   // Set up the request
-  xhr.open('GET', '/messages', true);
+  xhr.open('GET', '/messages.json', true);
 
   // Set up a callback function for when the request completes
   xhr.onload = function() {
