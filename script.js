@@ -1,7 +1,15 @@
-const messageForm = document.getElementById('message-form');
-const messageList = document.getElementById('message-list');
+const express = require('express')
+const bodyParser = require('body-parser')
+const fs = require('fs')
 
-let messages = [];
+const app = express()
+
+app.use(express.static('public'))
+app.use(bodyParser.json())
+
+app.get('/messages', getMessages)
+app.post('/messages', postMessage)
+app.put('/messages/:id/vote', voteMessage)
 
 function getMessages(request, response) {
   fs.readFile('./messages.json', 'utf8', function(err, data) {
@@ -15,43 +23,71 @@ function getMessages(request, response) {
   })
 }
 
+function postMessage(request, response) {
+  var newMessage = request.body
 
-function renderMessages() {
-	messageList.innerHTML = '';
-	messages.forEach((message, index) => {
-		const element = document.createElement('div');
-		element.classList.add('message');
-		element.innerHTML = `
-			<div class="votes">${message.votes}</div>
-			<div class="content">${message.content}</div>
-			<button class="upvote">Upvote</button>
-			<button class="downvote">Downvote</button>
-		`;
-		const upvoteButton = element.querySelector('.upvote');
-		upvoteButton.addEventListener('click', () => {
-			messages[index].votes++;
-			renderMessages();
-		});
-		const downvoteButton = element.querySelector('.downvote');
-		downvoteButton.addEventListener('click', () => {
-			messages[index].votes--;
-			renderMessages();
-		});
-		messageList.appendChild(element);
-	});
+  fs.readFile('./messages.json', 'utf8', function(err, data) {
+    if (err) {
+      console.error(err)
+      response.status(500).send('Server Error')
+    } else {
+      var messages = JSON.parse(data)
+      var lastId = messages.length > 0 ? messages[messages.length - 1].id : 0
+      var newId = lastId + 1
+      var newMessageWithId = {
+        id: newId,
+        text: newMessage.text,
+        votes: 0
+      }
+      messages.push(newMessageWithId)
+      var json = JSON.stringify(messages)
+
+      fs.writeFile('./messages.json', json, 'utf8', function(err) {
+        if (err) {
+          console.error(err)
+          response.status(500).send('Server Error')
+        } else {
+          response.status(201).send(newMessageWithId)
+        }
+      })
+    }
+  })
 }
 
-messageForm.addEventListener('submit', (event) => {
-	event.preventDefault();
-	const messageInput = document.getElementById('message-input');
-	const messageContent = messageInput.value;
-	messageInput.value = '';
-	const message = {
-		content: messageContent,
-		votes: 0,
-	};
-	messages.push(message);
-	renderMessages();
-});
+function voteMessage(request, response) {
+  var id = parseInt(request.params.id)
+  var voteType = request.body.type
+  var voteValue = voteType === 'up' ? 1 : -1
 
-renderMessages();
+  fs.readFile('./messages.json', 'utf8', function(err, data) {
+    if (err) {
+      console.error(err)
+      response.status(500).send('Server Error')
+    } else {
+      var messages = JSON.parse(data)
+      var message = messages.find(function(m) {
+        return m.id === id
+      })
+
+      if (message) {
+        message.votes += voteValue
+        var json = JSON.stringify(messages)
+
+        fs.writeFile('./messages.json', json, 'utf8', function(err) {
+          if (err) {
+            console.error(err)
+            response.status(500).send('Server Error')
+          } else {
+            response.status(200).send(message)
+          }
+        })
+      } else {
+        response.status(404).send('Message not found')
+      }
+    }
+  })
+}
+
+app.listen(3000, function() {
+  console.log('Server listening on port 3000')
+})
