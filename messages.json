@@ -1,1 +1,14 @@
-[  {    "id": 1,    "text": "This is the first message",    "votes": 0  },  {    "id": 2,    "text": "This is the second message",    "votes": 0  }]
+{
+  "messages": [
+    {
+      "id": 1,
+      "text": "This is a test message.",
+      "votes": 0
+    },
+    {
+      "id": 2,
+      "text": "Hello, world!",
+      "votes": 0
+    }
+  ]
+}
