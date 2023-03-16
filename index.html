@@ -1,23 +1,96 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>Anonymous Message Board</title>
-	<link rel="stylesheet" type="text/css" href="style.css">
-</head>
-<body>
-	<header>
-		<h1>Anonymous Message Board</h1>
-	</header>
-	<main>
-		<form id="message-form">
-			<label for="message-input">Write a message:</label>
-			<input type="text" id="message-input">
-			<button type="submit">Post</button>
-		</form>
-		<div id="message-list">
-			<p>Loading messages...</p>
-		</div>
-	</main>
-	<script src="app.js"></script>
-</body>
-</html>
+  <head>
+    <title>Message Board</title>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <h1>Message Board</h1>
+    <form>
+      <label for="new-message">New Message:</label>
+      <input type="text" id="new-message">
+      <button type="button" onclick="postMessage()">Post</button>
+    </form>
+    <h2>Messages:</h2>
+    <ul id="message-list"></ul>
+
+    <script>
+      function getMessages() {
+        var request = new XMLHttpRequest()
+        request.open('GET', '/messages', true)
+        request.onload = function() {
+          if (request.status >= 200 && request.status < 400) {
+            var messages = JSON.parse(request.responseText)
+            var messageList = document.getElementById('message-list')
+            messageList.innerHTML = ''
+            messages.forEach(function(message) {
+              var li = document.createElement('li')
+              li.textContent = message.text + ' - ' + message.votes + ' votes'
+              var upButton = document.createElement('button')
+              upButton.textContent = 'Up'
+              upButton.addEventListener('click', function() {
+                voteMessage(message.id, 'up')
+              })
+              var downButton = document.createElement('button')
+              downButton.textContent = 'Down'
+              downButton.addEventListener('click', function() {
+                voteMessage(message.id, 'down')
+              })
+              li.appendChild(upButton)
+              li.appendChild(downButton)
+              messageList.appendChild(li)
+            })
+          }
+        }
+        request.send()
+      }
+
+      function postMessage() {
+        var newMessage = document.getElementById('new-message').value
+        if (newMessage) {
+          var request = new XMLHttpRequest()
+          request.open('POST', '/messages', true)
+          request.setRequestHeader('Content-Type', 'application/json')
+          request.onload = function() {
+            if (request.status >= 200 && request.status < 400) {
+              var message = JSON.parse(request.responseText)
+              var messageList = document.getElementById('message-list')
+              var li = document.createElement('li')
+              li.textContent = message.text + ' - ' + message.votes + ' votes'
+              var upButton = document.createElement('button')
+              upButton.textContent = 'Up'
+              upButton.addEventListener('click', function() {
+                voteMessage(message.id, 'up')
+              })
+              var downButton = document.createElement('button')
+              downButton.textContent = 'Down'
+              downButton.addEventListener('click', function() {
+                voteMessage(message.id, 'down')
+              })
+              li.appendChild(upButton)
+              li.appendChild(downButton)
+              messageList.appendChild(li)
+            }
+          }
+          request.send(JSON.stringify({text: newMessage}))
+          document.getElementById('new-message').value = ''
+        }
+      }
+
+      function voteMessage(id, type) {
+        var request = new XMLHttpRequest()
+        request.open('PUT', '/messages/' + id + '/vote', true)
+        request.setRequestHeader('Content-Type', 'application/json')
+        request.onload = function() {
+          if (request.status >= 200 && request.status < 400) {
+            var message = JSON.parse(request.responseText)
+            var messageLi = document.querySelector('#message-list li:nth-child(' + id + ')')
+            messageLi.textContent = message.text + ' - ' + message.votes + ' votes'
+          }
+        }
+        request.send(JSON.stringify({type: type}))
+      }
+
+      getMessages()
+    </script>
+  </body>
